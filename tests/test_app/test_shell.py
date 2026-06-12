@@ -1,0 +1,71 @@
+"""Phase 3 (Red): frameless shell — title bar, toolbar, window controls."""
+
+from __future__ import annotations
+
+from PySide6 import QtCore
+
+from visionpower.app.title_bar import TitleBar
+from visionpower.app.toolbar import Toolbar
+from visionpower.app.main_window import MainWindow
+
+
+# ---------------------------------------------------------------- TitleBar
+def test_title_bar_shows_brand_and_five_menus(qapp):
+    tb = TitleBar()
+    assert tb.app_name_label.text() == "VisionPower"
+    assert tb.menu_labels() == ["檔案", "設定", "工具", "系統", "說明"]
+
+
+def test_title_bar_control_buttons_emit_signals(qapp):
+    tb = TitleBar()
+    got = {"min": 0, "max": 0, "close": 0}
+    tb.minimizeClicked.connect(lambda: got.__setitem__("min", got["min"] + 1))
+    tb.maximizeClicked.connect(lambda: got.__setitem__("max", got["max"] + 1))
+    tb.closeClicked.connect(lambda: got.__setitem__("close", got["close"] + 1))
+    tb.min_btn.click()
+    tb.max_btn.click()
+    tb.close_btn.click()
+    assert got == {"min": 1, "max": 1, "close": 1}
+
+
+# ----------------------------------------------------------------- Toolbar
+def test_toolbar_has_run_all_and_run_partial(qapp):
+    tbar = Toolbar()
+    assert "執行全部" in tbar.run_all_btn.text()
+    assert "部分執行" in tbar.run_partial_btn.text()
+
+
+def test_toolbar_run_buttons_emit_signals(qapp):
+    tbar = Toolbar()
+    fired = []
+    tbar.runAll.connect(lambda: fired.append("all"))
+    tbar.runPartial.connect(lambda: fired.append("partial"))
+    tbar.run_all_btn.click()
+    tbar.run_partial_btn.click()
+    assert fired == ["all", "partial"]
+
+
+# --------------------------------------------------------------- MainWindow
+def test_window_is_frameless(qapp):
+    win = MainWindow()
+    assert bool(win.windowFlags() & QtCore.Qt.FramelessWindowHint)
+
+
+def test_window_embeds_title_bar_and_toolbar(qapp):
+    win = MainWindow()
+    assert isinstance(win.title_bar, TitleBar)
+    assert isinstance(win.toolbar, Toolbar)
+
+
+def test_toggle_max_flips_state(qapp):
+    win = MainWindow()
+    assert win.toggle_max() is True
+    assert win.toggle_max() is False
+
+
+def test_close_button_hides_window(qapp):
+    win = MainWindow()
+    win.show()
+    assert win.isVisible()
+    win.title_bar.closeClicked.emit()
+    assert not win.isVisible()

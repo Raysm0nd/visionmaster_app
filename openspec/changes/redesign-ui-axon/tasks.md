@@ -12,10 +12,10 @@
 
 ## 3. 視窗外殼 desktop-shell（依賴 1）
 
-- [ ] 3.1 撰寫 `tests/test_app/test_shell.py`（offscreen）：標題列顯示 logo/應用名/五選單；最大化↔還原切換；關閉鈕呼叫 close；工具列含執行全部/部分執行
-- [ ] 3.2 實作 `app/title_bar.py`：無邊框拖曳、logo、選單占位、雲同步/設定/最小/最大/關閉鈕
-- [ ] 3.3 實作 `app/toolbar.py`：檔案/模組動作圖示鈕 + 執行全部（主要）/部分執行（次要）按鈕，發出對應 signal
-- [ ] 3.4 實作 `MainWindow` 外殼骨架：`FramelessWindowHint`、grid 列高（46/54/body/30）、狀態列
+- [x] 3.1 撰寫 `tests/test_app/test_shell.py`（offscreen）：標題列顯示 logo/應用名/五選單；最大化↔還原切換；關閉鈕呼叫 close；工具列含執行全部/部分執行
+- [x] 3.2 實作 `app/title_bar.py`：無邊框拖曳、logo、選單占位、雲同步/設定/最小/最大/關閉鈕
+- [x] 3.3 實作 `app/toolbar.py`：檔案/模組動作圖示鈕 + 執行全部（主要）/部分執行（次要）按鈕，發出對應 signal
+- [x] 3.4 實作 `MainWindow` 外殼骨架：`FramelessWindowHint`、grid 列高（46/54/body/30）、狀態列
 
 ## 4. 左塢與右面板 inspection-panels（依賴 1、3）
 
