@@ -69,3 +69,31 @@ def test_close_button_hides_window(qapp):
     assert win.isVisible()
     win.title_bar.closeClicked.emit()
     assert not win.isVisible()
+
+
+# --------------------------------------------------- sizing / resizing
+def test_window_has_minimum_size(qapp):
+    win = MainWindow()
+    assert win.minimumWidth() >= 800
+    assert win.minimumHeight() >= 600
+
+
+def test_fitted_geometry_fits_within_small_screen(qapp):
+    avail = QtCore.QRect(0, 0, 1280, 720)
+    g = MainWindow._fitted_geometry(avail)
+    assert g.width() <= 1280 and g.height() <= 720
+    assert g.x() >= 0 and g.y() >= 0  # centred, on-screen
+
+
+def test_fitted_geometry_caps_at_design_size_on_large_screen(qapp):
+    avail = QtCore.QRect(0, 0, 3840, 2160)
+    g = MainWindow._fitted_geometry(avail)
+    assert g.width() <= 1440 and g.height() <= 902
+
+
+def test_resize_edge_detects_corners_and_centre(qapp):
+    win = MainWindow()
+    win.resize(1200, 800)  # >= minimum size so the geometry is honoured
+    assert win._resize_edge(QtCore.QPoint(1, 1)) == 13       # HTTOPLEFT
+    assert win._resize_edge(QtCore.QPoint(1199, 799)) == 17  # HTBOTTOMRIGHT
+    assert win._resize_edge(QtCore.QPoint(600, 400)) == 0    # interior, no resize

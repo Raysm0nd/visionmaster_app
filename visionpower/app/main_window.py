@@ -9,7 +9,7 @@ re-run incrementally, and flows save/load as JSON.
 
 from __future__ import annotations
 
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 import visionpower.nodes  # noqa: F401  (populate the node registry)
 from visionpower.app import constants, theme
@@ -32,13 +32,26 @@ _GLYPH_BY_CATEGORY = {
     "sinks": "send",
 }
 
+_DESIGN_SIZE = (1440, 902)
+_RESIZE_MARGIN = 6  # px hit-zone for frameless edge dragging
+# Win32 hit-test codes returned to WM_NCHITTEST for native edge resizing.
+_HT = {
+    "topleft": 13, "topright": 14, "bottomleft": 16, "bottomright": 17,
+    "left": 10, "right": 11, "top": 12, "bottom": 15,
+}
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("VisionPower")
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        self.resize(1440, 902)
+        self.setMinimumSize(1024, 640)
+        screen = QtGui.QGuiApplication.primaryScreen()
+        if screen is not None:
+            self.setGeometry(self._fitted_geometry(screen.availableGeometry()))
+        else:
+            self.resize(*_DESIGN_SIZE)
 
         self.bridge = GraphBridge()
         self.scheduler = Scheduler()
@@ -267,3 +280,55 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.showNormal()
         return self._maximized
+
+    # -- sizing / frameless resize ----------------------------------------
+    @staticmethod
+    def _fitted_geometry(avail: QtCore.QRect) -> QtCore.QRect:
+        """Cap the window at the design size, shrink to fit, and centre it."""
+
+        w = min(_DESIGN_SIZE[0], int(avail.width() * 0.95))
+        h = min(_DESIGN_SIZE[1], int(avail.height() * 0.95))
+        x = avail.x() + (avail.width() - w) // 2
+        y = avail.y() + (avail.height() - h) // 2
+        return QtCore.QRect(x, y, w, h)
+
+    def _resize_edge(self, pos: QtCore.QPoint) -> int:
+        """Return the Win32 hit-test code for ``pos`` near a window edge (0 = none)."""
+
+        m = _RESIZE_MARGIN
+        w, h = self.width(), self.height()
+        left, right = pos.x() < m, pos.x() >= w - m
+        top, bottom = pos.y() < m, pos.y() >= h - m
+        if top and left:
+            return _HT["topleft"]
+        if top and right:
+            return _HT["topright"]
+        if bottom and left:
+            return _HT["bottomleft"]
+        if bottom and right:
+            return _HT["bottomright"]
+        if left:
+            return _HT["left"]
+        if right:
+            return _HT["right"]
+        if top:
+            return _HT["top"]
+        if bottom:
+            return _HT["bottom"]
+        return 0
+
+    def nativeEvent(self, event_type, message):  # noqa: N802 (Qt override)
+        """Let Windows handle edge resizing on the frameless window."""
+
+        if event_type == "windows_generic_MSG" and not self._maximized:
+            import ctypes
+            import ctypes.wintypes
+
+            msg = ctypes.wintypes.MSG.from_address(int(message))
+            if msg.message == 0x0084:  # WM_NCHITTEST
+                gx = ctypes.c_short(msg.lParam & 0xFFFF).value
+                gy = ctypes.c_short((msg.lParam >> 16) & 0xFFFF).value
+                edge = self._resize_edge(self.mapFromGlobal(QtCore.QPoint(gx, gy)))
+                if edge:
+                    return True, edge
+        return super().nativeEvent(event_type, message)
