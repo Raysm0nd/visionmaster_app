@@ -63,6 +63,31 @@ def test_toggle_max_flips_state(qapp):
     assert win.toggle_max() is False
 
 
+def test_maximize_restores_previous_geometry(qapp):
+    win = MainWindow()
+    win.show()
+    win.resize(1100, 720)
+    before = win.geometry()
+    win.toggle_max()   # fill available screen
+    win.toggle_max()   # restore
+    assert win.geometry() == before
+
+
+def test_window_flags_allow_minimize(qapp):
+    # FramelessWindowHint alone breaks taskbar minimize; the minimize hint fixes it.
+    win = MainWindow()
+    flags = win.windowFlags()
+    assert bool(flags & QtCore.Qt.FramelessWindowHint)
+    assert bool(flags & QtCore.Qt.WindowMinimizeButtonHint)
+
+
+def test_panels_are_fixed_size_not_user_adjustable(qapp):
+    # canvas + right panel sit in a plain layout — no splitter/dock to drag.
+    win = MainWindow()
+    assert win.right_panel.minimumWidth() == win.right_panel.maximumWidth()  # fixed 542
+    assert win.dock.width() == 56
+
+
 def test_close_button_hides_window(qapp):
     win = MainWindow()
     win.show()

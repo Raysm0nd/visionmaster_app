@@ -45,7 +45,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("VisionPower")
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        # Frameless, but keep the minimize hint so taskbar minimize still works.
+        self.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint
+            | QtCore.Qt.WindowMinimizeButtonHint
+            | QtCore.Qt.WindowMaximizeButtonHint
+            | QtCore.Qt.WindowSystemMenuHint
+        )
         self.setMinimumSize(1024, 640)
         screen = QtGui.QGuiApplication.primaryScreen()
         if screen is not None:
@@ -58,6 +64,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.results: dict = {}
         self._display_id: str | None = None
         self._maximized = False
+        self._restore_geom: QtCore.QRect | None = None
 
         central = QtWidgets.QWidget()
         central.setStyleSheet(f"background:{theme.BG};")
@@ -274,11 +281,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # -- window controls ---------------------------------------------------
     def toggle_max(self) -> bool:
+        """Maximise to fill the screen's work area, or restore the prior size."""
+
         self._maximized = not self._maximized
         if self._maximized:
-            self.showMaximized()
-        else:
-            self.showNormal()
+            self._restore_geom = self.geometry()
+            screen = self.screen() or QtGui.QGuiApplication.primaryScreen()
+            if screen is not None:
+                self.setGeometry(screen.availableGeometry())
+        elif self._restore_geom is not None:
+            self.setGeometry(self._restore_geom)
         return self._maximized
 
     # -- sizing / frameless resize ----------------------------------------
