@@ -33,12 +33,6 @@ _GLYPH_BY_CATEGORY = {
 }
 
 _DESIGN_SIZE = (1440, 902)
-_RESIZE_MARGIN = 6  # px hit-zone for frameless edge dragging
-# Win32 hit-test codes returned to WM_NCHITTEST for native edge resizing.
-_HT = {
-    "topleft": 13, "topright": 14, "bottomleft": 16, "bottomright": 17,
-    "left": 10, "right": 11, "top": 12, "bottom": 15,
-}
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -92,7 +86,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dock = Dock()
         self.canvas = NodeCanvas()
         self.right_panel = RightPanel()
+        # Lock the dock + right panel: fixed width, no splitter/dock to drag.
         self.right_panel.setFixedWidth(constants.RIGHT_W)
+        self.right_panel.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding
+        )
+        self.dock.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding
+        )
         self.property_panel = self.right_panel.property_panel  # convenience alias
 
         grid.addWidget(self.dock)
@@ -113,6 +114,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.status_label.setStyleSheet(f"color:{theme.TEXT_DIM};font-size:11px;")
         lay.addWidget(self.status_label)
         lay.addStretch(1)
+        version = QtWidgets.QLabel("VisionPower v0.2 · AXON")
+        version.setStyleSheet(
+            f"color:{theme.TEXT_FAINT};font-family:'{theme.FONT_MONO}',monospace;"
+            f"font-size:10px;"
+        )
+        lay.addWidget(version)
+        # corner grip: the only way to resize the frameless window (pure Qt).
+        grip = QtWidgets.QSizeGrip(bar)
+        grip.setFixedSize(14, 14)
+        lay.addWidget(grip, 0, QtCore.Qt.AlignBottom)
         return bar
 
     def set_status(self, message: str) -> None:
@@ -289,7 +300,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.setGeometry(self._restore_geom)
         return self._maximized
 
-    # -- sizing / frameless resize ----------------------------------------
+    # -- sizing -----------------------------------------------------------
     @staticmethod
     def _fitted_geometry(avail: QtCore.QRect) -> QtCore.QRect:
         """Cap the window at the design size, shrink to fit, and centre it."""
@@ -299,44 +310,3 @@ class MainWindow(QtWidgets.QMainWindow):
         x = avail.x() + (avail.width() - w) // 2
         y = avail.y() + (avail.height() - h) // 2
         return QtCore.QRect(x, y, w, h)
-
-    def _resize_edge(self, pos: QtCore.QPoint) -> int:
-        """Return the Win32 hit-test code for ``pos`` near a window edge (0 = none)."""
-
-        m = _RESIZE_MARGIN
-        w, h = self.width(), self.height()
-        left, right = pos.x() < m, pos.x() >= w - m
-        top, bottom = pos.y() < m, pos.y() >= h - m
-        if top and left:
-            return _HT["topleft"]
-        if top and right:
-            return _HT["topright"]
-        if bottom and left:
-            return _HT["bottomleft"]
-        if bottom and right:
-            return _HT["bottomright"]
-        if left:
-            return _HT["left"]
-        if right:
-            return _HT["right"]
-        if top:
-            return _HT["top"]
-        if bottom:
-            return _HT["bottom"]
-        return 0
-
-    def nativeEvent(self, event_type, message):  # noqa: N802 (Qt override)
-        """Let Windows handle edge resizing on the frameless window."""
-
-        if event_type == "windows_generic_MSG" and not self._maximized:
-            import ctypes
-            import ctypes.wintypes
-
-            msg = ctypes.wintypes.MSG.from_address(int(message))
-            if msg.message == 0x0084:  # WM_NCHITTEST
-                gx = ctypes.c_short(msg.lParam & 0xFFFF).value
-                gy = ctypes.c_short((msg.lParam >> 16) & 0xFFFF).value
-                edge = self._resize_edge(self.mapFromGlobal(QtCore.QPoint(gx, gy)))
-                if edge:
-                    return True, edge
-        return super().nativeEvent(event_type, message)

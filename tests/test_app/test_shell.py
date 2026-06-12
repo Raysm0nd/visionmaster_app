@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6 import QtCore
+from PySide6 import QtCore, QtWidgets
 
 from visionpower.app.title_bar import TitleBar
 from visionpower.app.toolbar import Toolbar
@@ -124,9 +124,8 @@ def test_fitted_geometry_caps_at_design_size_on_large_screen(qapp):
     assert g.width() <= 1440 and g.height() <= 902
 
 
-def test_resize_edge_detects_corners_and_centre(qapp):
+def test_window_is_resizable_via_size_grip(qapp):
+    # frameless resize is provided by a QSizeGrip (pure Qt, no native hacks)
     win = MainWindow()
-    win.resize(1200, 800)  # >= minimum size so the geometry is honoured
-    assert win._resize_edge(QtCore.QPoint(1, 1)) == 13       # HTTOPLEFT
-    assert win._resize_edge(QtCore.QPoint(1199, 799)) == 17  # HTBOTTOMRIGHT
-    assert win._resize_edge(QtCore.QPoint(600, 400)) == 0    # interior, no resize
+    grips = win.findChildren(QtWidgets.QSizeGrip)
+    assert len(grips) >= 1
