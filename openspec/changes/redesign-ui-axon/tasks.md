@@ -6,9 +6,9 @@
 
 ## 2. 純資料橋（依賴 1）
 
-- [ ] 2.1 撰寫 `tests/test_app/test_graph_bridge.py`：驗證重寫後的 `GraphBridge` 維護有序核心節點清單、可新增/清除、`to_core_graph()` 產出可被 Scheduler 執行（無 Qt、無 NodeGraphQt）
-- [ ] 2.2 重寫 `visionpower/app/graph_bridge.py`：移除 NodeGraphQt 綁定，改為純資料橋（節點清單 + 顯示順序 + 對核心層介面）
-- [ ] 2.3 重寫示範流程建構函式：以資料橋建立 影像源→…→發送數據 的有序節點，供畫布與 Scheduler 使用
+- [x] 2.1 撰寫 `tests/test_app/test_graph_bridge.py`：驗證重寫後的 `GraphBridge` 維護有序核心節點清單、可新增/清除、`to_core_graph()` 產出可被 Scheduler 執行（無 Qt、無 NodeGraphQt）
+- [x] 2.2 重寫 `visionpower/app/graph_bridge.py`：移除 NodeGraphQt 綁定，改為純資料橋（節點清單 + 顯示順序 + 對核心層介面）
+- [x] 2.3 重寫示範流程建構函式：以資料橋建立 影像源→…→發送數據 的有序節點，供畫布與 Scheduler 使用
 
 ## 3. 視窗外殼 desktop-shell（依賴 1）
 
