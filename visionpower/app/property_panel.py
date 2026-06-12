@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from PySide6 import QtCore, QtWidgets
 
+from visionpower.app import theme
 from visionpower.core import Node
 from visionpower.core.params import ParamSpec, ParamType
 
@@ -22,8 +23,11 @@ class PropertyPanel(QtWidgets.QWidget):
         super().__init__(parent)
         self._node: Node | None = None
         self._layout = QtWidgets.QVBoxLayout(self)
+        self._layout.setContentsMargins(16, 16, 16, 16)
         self._title = QtWidgets.QLabel("未選取節點")
-        self._title.setStyleSheet("font-weight: bold;")
+        self._title.setStyleSheet(
+            f"color:{theme.TEXT};font-weight:600;font-size:13px;"
+        )
         self._layout.addWidget(self._title)
         self._form_host = QtWidgets.QWidget()
         self._form = QtWidgets.QFormLayout(self._form_host)

@@ -10,11 +10,11 @@ dependencies = [
 ]
 
 # GUI stack is an optional extra: the pure-Python `core` engine installs and
-# tests without Qt. Install with `uv sync --extra gui`.
+# tests without Qt. Install with `uv sync --extra gui`. The node canvas is now
+# drawn with QtSvg/QPainter, so NodeGraphQt is no longer required.
 [project.optional-dependencies]
 gui = [
     "PySide6>=6.6",
-    "NodeGraphQt>=0.6.3",
 ]
 # Deferred to milestone 2 (model nodes):
 #   inference = ["openvino>=2024.0"]

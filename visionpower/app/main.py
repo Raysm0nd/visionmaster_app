@@ -15,6 +15,8 @@ def main() -> int:
     apply_theme(app)
     window = MainWindow()
     window.show()
+    window.raise_()
+    window.activateWindow()  # bring to front so it isn't hidden behind others
     return app.exec()
 
 
