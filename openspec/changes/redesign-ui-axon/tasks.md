@@ -1,8 +1,8 @@
 ## 1. 主題與資源基礎（無依賴）
 
-- [ ] 1.1 撰寫 `tests/test_app/test_theme.py`：驗證 `theme.py` 匯出 AGC 配色常數（AC/PRIMARY/RED/SUCCESS/BG…）與字型族常數，且字型缺失時有回退值
-- [ ] 1.2 重寫 `visionpower/app/theme.py`：具名顏色常數、字型族（Space Grotesk/IBM Plex Sans/JetBrains Mono + 回退）、產生 Qt StyleSheet 的輔助函式
-- [ ] 1.3 新增節點分類資料表（12 類：圖示鍵+中文名）與節點色票常數，集中於 `theme.py` 或 `app/constants.py`
+- [x] 1.1 撰寫 `tests/test_app/test_theme.py`：驗證 `theme.py` 匯出 AGC 配色常數（AC/PRIMARY/RED/SUCCESS/BG…）與字型族常數，且字型缺失時有回退值
+- [x] 1.2 重寫 `visionpower/app/theme.py`：具名顏色常數、字型族（Space Grotesk/IBM Plex Sans/JetBrains Mono + 回退）、產生 Qt StyleSheet 的輔助函式
+- [x] 1.3 新增節點分類資料表（12 類：圖示鍵+中文名）與節點色票常數，集中於 `theme.py` 或 `app/constants.py`
 
 ## 2. 純資料橋（依賴 1）
 

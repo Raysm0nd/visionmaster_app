@@ -1,9 +1,10 @@
-"""VisionMaster-style dark theme: bundled CJK font + charcoal QSS.
+"""AXON / VisionPower dark theme — AGC corporate palette.
 
-``apply_theme(app)`` registers the bundled Noto Sans TC font (so headless /
-offscreen rendering has real glyphs, and Traditional-Chinese UI chrome renders
-everywhere) and applies the dark stylesheet with the orange accent used for
-selection/highlights.
+All UI chrome is driven from the named tokens below; widgets reference these
+constants instead of hard-coding hex, so a palette tweak is a one-line change.
+
+``apply_theme(app)`` registers the bundled Noto Sans TC font (real CJK glyphs
+even for headless/offscreen rendering) and applies the dark stylesheet.
 """
 
 from __future__ import annotations
@@ -12,81 +13,105 @@ from pathlib import Path
 
 from PySide6 import QtGui, QtWidgets
 
-ACCENT = "#e87d0d"  # VisionMaster-ish orange
+# ---------------------------------------------------------------- palette
+# AGC corporate colours (locked by the approved AXON design).
+PRIMARY = "#0C4DA2"   # deep brand blue
+ACCENT = "#2F80D8"    # interactive highlight (visible on dark)
+RED = "#D23A55"       # alert / close / detection box
+SUCCESS = "#34D399"   # done / ok
+WARN = "#FBBF24"      # warning / NG
+
+# Surfaces (darkest → lightest).
+BG = "#0A0D13"        # window body
+BG_DEEP = "#05070B"   # outermost backdrop
+BG_PANEL = "#0B1018"  # toolbars / side panels
+BG_CANVAS = "#070D15"  # node canvas
+BG_DOCK = "#0A0F17"   # left icon dock
+
+# Text + lines.
+TEXT = "#E7ECF3"      # primary text
+TEXT_DIM = "#7E8AA0"  # secondary / status text
+TEXT_FAINT = "#5D6C80"  # hints / indices
+BORDER = "#1C2530"    # hairline separators
+
+# Per-node accent swatches, in pipeline order (image-source → send-data).
+NODE_COLORS = ["#2DD4BF", "#5AA0E6", "#A78BFA", "#FBBF24", "#F472B6", "#34D399"]
+
+# ----------------------------------------------------------------- fonts
+# Preferred families with a graceful fallback when not installed on the host.
+FONT_BRAND = "Space Grotesk"   # logo / headings
+FONT_BODY = "IBM Plex Sans"    # general UI text
+FONT_MONO = "JetBrains Mono"   # numbers / codes / readouts
+
 _FONT_FILE = Path(__file__).parent / "assets" / "fonts" / "NotoSansTC-Regular.ttf"
 
-_QSS = f"""
+
+def resolve_font_family(preferred: str, fallback: str) -> str:
+    """Return ``preferred`` if installed (per QFontDatabase), else ``fallback``.
+
+    Requires a live ``QApplication`` (QFontDatabase is queried statically).
+    """
+
+    if preferred in QtGui.QFontDatabase.families():
+        return preferred
+    return fallback
+
+
+def build_stylesheet() -> str:
+    """Build the application QSS from the palette tokens."""
+
+    return f"""
 * {{ outline: none; }}
-QMainWindow, QDialog, QDockWidget, QWidget {{
-    background-color: #2d2d2d; color: #d6d6d6;
+QMainWindow, QDialog, QWidget {{
+    background-color: {BG}; color: {TEXT};
+    font-family: '{FONT_BODY}', 'Noto Sans TC', sans-serif;
 }}
-QMenuBar, QMenu {{ background-color: #232323; color: #d6d6d6; }}
-QMenuBar::item:selected, QMenu::item:selected {{ background: {ACCENT}; color: #fff; }}
-QToolBar {{
-    background-color: #232323; border: none; spacing: 4px; padding: 3px;
+QToolTip {{
+    background: {BG_PANEL}; color: {TEXT};
+    border: 1px solid {ACCENT}; padding: 3px 6px;
 }}
-QToolBar QToolButton {{
-    background: transparent; color: #d6d6d6; padding: 4px 10px; border-radius: 3px;
-}}
-QToolBar QToolButton:hover {{ background: #3a3a3a; }}
-QToolBar QToolButton:pressed {{ background: {ACCENT}; color: #fff; }}
-QDockWidget {{ titlebar-close-icon: none; font-weight: bold; }}
-QDockWidget::title {{
-    background: #232323; padding: 5px 8px; border-bottom: 1px solid #1a1a1a;
-}}
-QTabWidget::pane {{ border: 1px solid #1f1f1f; background: #2d2d2d; }}
-QTabBar::tab {{
-    background: #232323; color: #b8b8b8; padding: 6px 18px;
-    border: 1px solid #1f1f1f; border-bottom: none;
-}}
-QTabBar::tab:selected {{
-    background: #2d2d2d; color: #fff; border-bottom: 2px solid {ACCENT};
-}}
-QListWidget, QTreeWidget, QTableWidget, QTableView {{
-    background-color: #262626; alternate-background-color: #2b2b2b;
-    border: 1px solid #1f1f1f; color: #d6d6d6;
-    selection-background-color: {ACCENT}; selection-color: #fff;
-    gridline-color: #383838;
-}}
-QHeaderView::section {{
-    background-color: #232323; color: #cfcfcf; padding: 4px 8px;
-    border: none; border-right: 1px solid #1a1a1a; border-bottom: 1px solid #1a1a1a;
-}}
+QLabel {{ background: transparent; }}
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
-    background-color: #1f1f1f; color: #e0e0e0; border: 1px solid #3c3c3c;
-    border-radius: 2px; padding: 3px 6px; selection-background-color: {ACCENT};
+    background-color: {BG_DEEP}; color: {TEXT};
+    border: 1px solid {BORDER}; border-radius: 6px; padding: 4px 8px;
+    selection-background-color: {ACCENT};
 }}
 QComboBox QAbstractItemView {{
-    background: #262626; color: #e0e0e0; selection-background-color: {ACCENT};
+    background: {BG_PANEL}; color: {TEXT};
+    selection-background-color: {ACCENT}; border: 1px solid {BORDER};
 }}
 QPushButton {{
-    background-color: #3a3a3a; color: #e0e0e0; border: 1px solid #4a4a4a;
-    border-radius: 3px; padding: 4px 14px;
+    background-color: rgba(47,128,216,0.10); color: {TEXT};
+    border: 1px solid {BORDER}; border-radius: 8px; padding: 6px 14px;
 }}
-QPushButton:hover {{ background-color: #454545; }}
+QPushButton:hover {{ background-color: rgba(47,128,216,0.20); }}
 QPushButton:pressed {{ background-color: {ACCENT}; color: #fff; }}
 QCheckBox::indicator {{
-    width: 14px; height: 14px; border: 1px solid #555; background: #1f1f1f;
+    width: 14px; height: 14px; border: 1px solid {BORDER};
+    background: {BG_DEEP}; border-radius: 3px;
 }}
 QCheckBox::indicator:checked {{ background: {ACCENT}; }}
-QStatusBar {{ background: #232323; color: #b0b0b0; }}
-QScrollBar:vertical {{ background: #262626; width: 11px; }}
-QScrollBar:horizontal {{ background: #262626; height: 11px; }}
-QScrollBar::handle {{ background: #4a4a4a; border-radius: 4px; min-height: 24px; }}
-QScrollBar::handle:hover {{ background: #5a5a5a; }}
+QScrollBar:vertical {{ background: transparent; width: 9px; }}
+QScrollBar:horizontal {{ background: transparent; height: 9px; }}
+QScrollBar::handle {{
+    background: rgba(255,255,255,0.12); border-radius: 4px; min-height: 24px;
+}}
+QScrollBar::handle:hover {{ background: rgba(255,255,255,0.22); }}
 QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
-QSplitter::handle {{ background: #1f1f1f; }}
-QToolTip {{ background: #1f1f1f; color: #e0e0e0; border: 1px solid {ACCENT}; }}
+QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
+QSplitter::handle {{ background: {BORDER}; }}
 """
 
 
 def apply_theme(app: QtWidgets.QApplication) -> None:
-    family = "Noto Sans TC"
+    """Register the bundled CJK font and apply the dark AGC stylesheet."""
+
+    base_family = "Noto Sans TC"
     if _FONT_FILE.exists():
         font_id = QtGui.QFontDatabase.addApplicationFont(str(_FONT_FILE))
         families = QtGui.QFontDatabase.applicationFontFamilies(font_id)
         if families:
-            family = families[0]
-    app.setFont(QtGui.QFont(family, 9))
+            base_family = families[0]
+    app.setFont(QtGui.QFont(resolve_font_family(FONT_BODY, base_family), 9))
     app.setStyle("Fusion")  # consistent base across platforms
-    app.setStyleSheet(_QSS)
+    app.setStyleSheet(build_stylesheet())
