@@ -1,0 +1,16 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local verification scratch (gui-verify skill)
+/artifacts/
+/_sample.png
+/_screenshot_check.py
+.pytest_cache/
