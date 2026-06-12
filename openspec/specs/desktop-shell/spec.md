@@ -1,0 +1,45 @@
+# desktop-shell Specification
+
+## Purpose
+TBD - created by archiving change redesign-ui-axon. Update Purpose after archive.
+## Requirements
+### Requirement: 無邊框主視窗外殼
+系統 SHALL 以無邊框視窗呈現主介面，並提供自訂標題列承載 logo、應用名稱（VisionPower）、選單與視窗控制鈕。視窗 MUST 可透過標題列拖曳移動，並提供最小化、最大化/還原、關閉三個控制鈕。
+
+#### Scenario: 視窗以無邊框模式啟動
+- **WHEN** 應用啟動主視窗
+- **THEN** 視窗無原生標題列，且自訂標題列顯示 logo、「VisionPower」與「MACHINE VISION」副標
+
+#### Scenario: 關閉鈕結束應用
+- **WHEN** 使用者點擊標題列的關閉鈕
+- **THEN** 主視窗關閉
+
+#### Scenario: 最大化與還原切換
+- **WHEN** 使用者點擊最大化鈕且視窗目前為一般大小
+- **THEN** 視窗最大化；再次點擊則還原為先前尺寸
+
+### Requirement: 主選單列
+系統 SHALL 在標題列顯示「檔案、設定、工具、系統、說明」五個頂層選單項，並在滑鼠懸停時提供視覺回饋。
+
+#### Scenario: 選單項顯示
+- **WHEN** 主視窗渲染完成
+- **THEN** 標題列依序顯示「檔案」「設定」「工具」「系統」「說明」五項
+
+### Requirement: 工具列動作
+系統 SHALL 提供工具列，包含檔案動作（儲存、開啟、另存、匯入、加密）、模組動作（擷取、模組庫、全域變數、3D 處理、全域校正、腳本），以及「執行全部」（主要樣式）與「部分執行」（次要樣式）兩個執行按鈕。
+
+#### Scenario: 執行按鈕觸發引擎
+- **WHEN** 使用者點擊「執行全部」
+- **THEN** 系統觸發從第一個節點起的完整流程執行
+
+#### Scenario: 部分執行從選取節點起算
+- **WHEN** 已選取某節點且使用者點擊「部分執行」
+- **THEN** 系統從該選取節點往下執行至流程結尾
+
+### Requirement: 狀態列
+系統 SHALL 在視窗底部顯示狀態列，呈現目前執行狀態文字訊息。
+
+#### Scenario: 執行狀態回饋
+- **WHEN** 流程執行完成
+- **THEN** 狀態列更新為包含結果摘要的訊息
+
