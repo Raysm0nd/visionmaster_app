@@ -2,19 +2,37 @@ schema: spec-driven
 
 # Project context (optional)
 # This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  # VisionPower — 工業級圖像處理與缺陷檢測平台
+
+  **架構**：引擎/UI 解耦設計
+  - 核心（visionpower/core/）：純 Python，無 Qt 依賴，可無頭運行
+  - 節點（visionpower/nodes/）：OpenCV 內建實現 + 未來模型節點
+  - UI（visionpower/app/）：PySide6 + NodeGraphQt，VisionMaster 風格
+  - 測試（tests/）：引擎測試（無 Qt）+ GUI 測試（pytest-qt）
+
+  **技術棧**：Python 3.11+, numpy, OpenCV 4.9+, PySide6 6.6+, NodeGraphQt
+
+  **工作流程**：TDD（Red → Green → Refactor）+ OpenSpec 記錄
+  - 每個功能先寫失敗測試，再寫實作，最後重構
+  - 所有程式碼變更透過 OpenSpec 追蹤（/openspec-propose → /openspec-apply-change）
+  - 測試覆蓋率 ≥ 80%，所有函式都有 unit test
+
+  **當前進度**：M1.5 完成（節點編輯器、預覽、保存/加載）
+  **下一步**：M2 - 模型節點（InferenceBackend）
+
+  **自定義技能**：
+  - /scaffold-node — 快速創建新節點（自動生成類、端口、測試）
+  - /run-app — 啟動 GUI 應用或無頭執行工作流
+  - /gui-verify — 無顯示驗證 UI 變更（離屏渲染截圖）
 
 # Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - 保持在 500 字以內
+    - 必須包含「目標」、「設計」、「任務」三節
+    - 列出核心文件與修改範圍
+  tasks:
+    - 拆解為 ≤5 個獨立子任務
+    - 每個任務預期耗時 ≤2 小時
+    - 標明依賴關係
