@@ -11,7 +11,9 @@ from __future__ import annotations
 from PySide6 import QtCore, QtWidgets
 
 from visionpower.app import constants, theme
+from visionpower.app.dock import Dock
 from visionpower.app.graph_bridge import GraphBridge
+from visionpower.app.panels import RightPanel
 from visionpower.app.title_bar import TitleBar
 from visionpower.app.toolbar import Toolbar
 
@@ -46,20 +48,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.title_bar.maximizeClicked.connect(self.toggle_max)
         self.title_bar.closeClicked.connect(self.close)
 
-    # -- body (placeholders filled by later phases) ------------------------
+    # -- body (canvas placeholder filled in Phase 5) -----------------------
     def _build_body(self) -> QtWidgets.QWidget:
         body = QtWidgets.QWidget()
         grid = QtWidgets.QHBoxLayout(body)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(0)
 
-        self.dock_holder = self._placeholder(constants.DOCK_W, theme.BG_DOCK)
+        self.dock = Dock()
         self.canvas_holder = self._placeholder(0, theme.BG_CANVAS)
-        self.right_holder = self._placeholder(constants.RIGHT_W, theme.BG_PANEL)
+        self.right_panel = RightPanel()
+        self.right_panel.setFixedWidth(constants.RIGHT_W)
 
-        grid.addWidget(self.dock_holder)
+        grid.addWidget(self.dock)
         grid.addWidget(self.canvas_holder, stretch=1)
-        grid.addWidget(self.right_holder)
+        grid.addWidget(self.right_panel)
         return body
 
     @staticmethod

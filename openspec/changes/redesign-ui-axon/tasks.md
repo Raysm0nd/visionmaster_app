@@ -19,11 +19,11 @@
 
 ## 4. 左塢與右面板 inspection-panels（依賴 1、3）
 
-- [ ] 4.1 撰寫 `tests/test_app/test_panels.py`（offscreen）：左塢渲染 12 分類且可選取高亮；右面板源圖/輸出結果分頁可切換；結果鍵值表依節點資料渲染
-- [ ] 4.2 實作 `app/dock.py`：左側 56px 圖示塢，分類選取高亮
-- [ ] 4.3 重寫 `app/preview_view.py`：棋盤底影像預覽、前/後切換、檔名+尺寸讀數、執行中掃描動畫覆蓋層
-- [ ] 4.4 重寫 `app/panels.py`：右側源圖/輸出結果分頁容器 + 子工具列（分割/網格/縮放/全螢幕）+ 輸出結果鍵值表
-- [ ] 4.5 重寫 `app/property_panel.py`：套用新主題，維持 `param_changed` signal 與既有節點參數連動
+- [x] 4.1 撰寫 `tests/test_app/test_panels.py`（offscreen）：左塢渲染 12 分類且可選取高亮；右面板源圖/輸出結果分頁可切換；結果鍵值表依節點資料渲染
+- [x] 4.2 實作 `app/dock.py`：左側 56px 圖示塢，分類選取高亮
+- [x] 4.3 重寫 `app/preview_view.py`：棋盤底影像預覽、前/後切換、檔名+尺寸讀數、執行中掃描動畫覆蓋層
+- [x] 4.4 重寫 `app/panels.py`：右側源圖/輸出結果分頁容器 + 子工具列（分割/網格/縮放/全螢幕）+ 輸出結果鍵值表
+- [x] 4.5 重寫 `app/property_panel.py`：套用新主題，維持 `param_changed` signal 與既有節點參數連動
 
 ## 5. 自繪節點畫布 node-canvas（依賴 1、2）
 

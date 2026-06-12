@@ -1,174 +1,187 @@
-"""Right-side / bottom panels mirroring the VisionMaster layout:
+"""Right inspection panel — 源圖 / 輸出結果 / 屬性 tabs.
 
-- :class:`SourceStrip`   — 圖像源 thumbnail strip (i/n, click to switch, run-all)
-- :class:`ResultsPanel`  — 模組結果 tab: detections table + verdict + measurements
-- :class:`HistoryPanel`  — 歷史結果 bottom table: 執行序號 / 時間 / 模組數據
+源圖 and 輸出結果 mirror the design; 屬性 is added so node parameters stay
+editable (the design folded the property panel away, but functional parity
+requires it). A sub-toolbar carries view controls; the result tab renders the
+selected node's structured output as a key-value list.
 """
 
 from __future__ import annotations
 
-import cv2
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
-from visionpower.core import Node, NodeResult
-from visionpower.core.types import Detection, Measurement, Verdict
+from visionpower.app import icons, theme
+from visionpower.app.preview_view import PreviewView
+from visionpower.app.property_panel import PropertyPanel
+from visionpower.core import NodeResult
+from visionpower.core.types import Detection, Image, Measurement, Verdict
 
-_THUMB = QtCore.QSize(72, 54)
+_SUBBAR = ["split", "grid", "search", "zoomout", "onetoone", "fullscreen"]
 
 
-class SourceStrip(QtWidgets.QWidget):
-    """Thumbnail strip bound to an ``sources/ImageSource`` core node."""
-
-    index_selected = QtCore.Signal(int)
-    run_all_requested = QtCore.Signal()
-
-    def __init__(self, parent=None) -> None:
+class RightPanel(QtWidgets.QWidget):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
-        self._node: Node | None = None
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(4, 2, 4, 2)
+        self.setObjectName("rightPanel")
+        self.setStyleSheet(
+            f"#rightPanel{{background:{theme.BG_PANEL};"
+            f"border-left:1px solid rgba(255,255,255,0.06);}}"
+        )
+        self._tab = "image"
+        self._tab_buttons: dict[str, QtWidgets.QPushButton] = {}
 
-        header = QtWidgets.QHBoxLayout()
-        self._title = QtWidgets.QLabel("圖像源 (0/0)")
-        self._run_all = QtWidgets.QPushButton("全部執行")
-        self._run_all.clicked.connect(self.run_all_requested.emit)
-        header.addWidget(self._title)
-        header.addStretch(1)
-        header.addWidget(self._run_all)
-        layout.addLayout(header)
+        col = QtWidgets.QVBoxLayout(self)
+        col.setContentsMargins(0, 0, 0, 0)
+        col.setSpacing(0)
 
-        self._list = QtWidgets.QListWidget()
-        self._list.setViewMode(QtWidgets.QListView.IconMode)
-        self._list.setFlow(QtWidgets.QListView.LeftToRight)
-        self._list.setWrapping(False)
-        self._list.setIconSize(_THUMB)
-        self._list.setFixedHeight(_THUMB.height() + 34)
-        self._list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self._list.currentRowChanged.connect(self._on_row)
-        layout.addWidget(self._list)
+        col.addWidget(self._build_tabs())
+        col.addWidget(self._build_subbar())
 
-    def bind(self, node: Node | None) -> None:
-        """Point the strip at an ImageSource node (or None) and refresh."""
+        self.preview = PreviewView()
+        self.property_panel = PropertyPanel()
+        self._result_view = self._build_result_view()
 
-        self._node = node
-        self._list.blockSignals(True)
-        self._list.clear()
-        files = node.files() if node is not None else []
-        for path in files:
-            data = cv2.imread(path, cv2.IMREAD_COLOR)
-            item = QtWidgets.QListWidgetItem(QtCore.QFileInfo(path).fileName())
-            if data is not None:
-                h, w = data.shape[:2]
-                rgb = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)
-                qimg = QtGui.QImage(rgb.data, w, h, 3 * w, QtGui.QImage.Format_RGB888)
-                item.setIcon(QtGui.QIcon(QtGui.QPixmap.fromImage(qimg.copy())))
-            item.setToolTip(path)
-            self._list.addItem(item)
-        if node is not None and files:
-            self._list.setCurrentRow(min(int(node.param("index")), len(files) - 1))
-        self._list.blockSignals(False)
-        self._update_title()
+        self._stack = QtWidgets.QStackedWidget()
+        self._stack.addWidget(self.preview)        # 0 image
+        self._stack.addWidget(self._result_view)   # 1 result
+        self._stack.addWidget(self.property_panel)  # 2 property
+        col.addWidget(self._stack, stretch=1)
 
-    def _on_row(self, row: int) -> None:
-        if row >= 0 and self._node is not None:
-            self._node.set_param("index", row)
-            self._update_title()
-            self.index_selected.emit(row)
+        self._restyle_tabs()
 
-    def select_row(self, row: int) -> None:
-        self._list.blockSignals(True)
-        self._list.setCurrentRow(row)
-        self._list.blockSignals(False)
-        self._update_title()
+    # -- tab state ---------------------------------------------------------
+    def current_tab(self) -> str:
+        return self._tab
 
-    def count(self) -> int:
-        return self._list.count()
+    def show_image_tab(self) -> None:
+        self._set_tab("image", 0)
 
-    def _update_title(self) -> None:
-        n = self._list.count()
-        i = self._list.currentRow() + 1 if n else 0
-        self._title.setText(f"圖像源 ({i}/{n})")
+    def show_result_tab(self) -> None:
+        self._set_tab("result", 1)
+
+    def show_property_tab(self) -> None:
+        self._set_tab("property", 2)
+
+    def _set_tab(self, name: str, index: int) -> None:
+        self._tab = name
+        self._stack.setCurrentIndex(index)
+        self._restyle_tabs()
+
+    # -- results -----------------------------------------------------------
+    def show_result(self, node_label: str, result: NodeResult | None) -> None:
+        self._result_title.setText(f"{node_label} · 輸出")
+        self._result_table.setRowCount(0)
+        for key, value in _result_rows(result):
+            row = self._result_table.rowCount()
+            self._result_table.insertRow(row)
+            self._result_table.setItem(row, 0, QtWidgets.QTableWidgetItem(key))
+            self._result_table.setItem(row, 1, QtWidgets.QTableWidgetItem(value))
+
+    def result_row_count(self) -> int:
+        return self._result_table.rowCount()
+
+    # -- construction ------------------------------------------------------
+    def _build_tabs(self) -> QtWidgets.QWidget:
+        bar = QtWidgets.QWidget()
+        bar.setFixedHeight(44)
+        row = QtWidgets.QHBoxLayout(bar)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(0)
+        for name, label in [("image", "源圖"), ("result", "輸出結果"), ("property", "屬性")]:
+            btn = QtWidgets.QPushButton(label)
+            btn.setCursor(QtCore.Qt.PointingHandCursor)
+            btn.setFixedHeight(44)
+            btn.clicked.connect(lambda _=False, n=name: self._tab_clicked(n))
+            self._tab_buttons[name] = btn
+            row.addWidget(btn)
+        row.addStretch(1)
+        bar.setStyleSheet("border-bottom:1px solid rgba(255,255,255,0.06);")
+        return bar
+
+    def _tab_clicked(self, name: str) -> None:
+        {"image": self.show_image_tab, "result": self.show_result_tab,
+         "property": self.show_property_tab}[name]()
+
+    def _restyle_tabs(self) -> None:
+        for name, btn in self._tab_buttons.items():
+            active = name == self._tab
+            color = theme.TEXT if active else theme.TEXT_DIM
+            border = theme.ACCENT if active else "transparent"
+            bg = "rgba(47,128,216,0.06)" if active else "transparent"
+            btn.setStyleSheet(
+                f"QPushButton{{background:{bg};color:{color};border:none;"
+                f"border-bottom:2px solid {border};font-size:14px;font-weight:600;"
+                f"padding:0 22px;}}"
+            )
+
+    def _build_subbar(self) -> QtWidgets.QWidget:
+        bar = QtWidgets.QWidget()
+        row = QtWidgets.QHBoxLayout(bar)
+        row.setContentsMargins(12, 9, 12, 9)
+        row.setSpacing(1)
+        row.addStretch(1)
+        for name in _SUBBAR:
+            btn = QtWidgets.QPushButton()
+            btn.setIcon(icons.make_icon(name, "#7E8AA0", 16))
+            btn.setIconSize(QtCore.QSize(16, 16))
+            btn.setCursor(QtCore.Qt.PointingHandCursor)
+            btn.setFixedSize(27, 27)
+            btn.setStyleSheet(
+                "QPushButton{background:transparent;border:none;border-radius:6px;}"
+                "QPushButton:hover{background:rgba(255,255,255,0.07);}"
+            )
+            row.addWidget(btn)
+        bar.setStyleSheet("border-bottom:1px solid rgba(255,255,255,0.05);")
+        return bar
+
+    def _build_result_view(self) -> QtWidgets.QWidget:
+        host = QtWidgets.QWidget()
+        col = QtWidgets.QVBoxLayout(host)
+        col.setContentsMargins(16, 16, 16, 16)
+        self._result_title = QtWidgets.QLabel("輸出")
+        self._result_title.setStyleSheet(
+            f"color:{theme.TEXT_FAINT};font-size:11px;font-weight:600;"
+            f"letter-spacing:2px;"
+        )
+        col.addWidget(self._result_title)
+        self._result_table = QtWidgets.QTableWidget(0, 2)
+        self._result_table.horizontalHeader().setVisible(False)
+        self._result_table.verticalHeader().setVisible(False)
+        self._result_table.setShowGrid(False)
+        self._result_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self._result_table.horizontalHeader().setSectionResizeMode(
+            0, QtWidgets.QHeaderView.ResizeToContents
+        )
+        self._result_table.horizontalHeader().setSectionResizeMode(
+            1, QtWidgets.QHeaderView.Stretch
+        )
+        col.addWidget(self._result_table, stretch=1)
+        return host
 
 
-class ResultsPanel(QtWidgets.QWidget):
-    """模組結果: structured outputs of the displayed node."""
+def _result_rows(result: NodeResult | None) -> list[tuple[str, str]]:
+    """Flatten a NodeResult's structured outputs into key-value display rows."""
 
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        self._verdict = QtWidgets.QLabel("—")
-        self._verdict.setStyleSheet("font-size: 14px; font-weight: bold;")
-        layout.addWidget(self._verdict)
-        self._table = QtWidgets.QTableWidget(0, 6)
-        self._table.setHorizontalHeaderLabels(["#", "標籤", "X", "Y", "寬x高", "面積"])
-        self._table.horizontalHeader().setStretchLastSection(True)
-        self._table.verticalHeader().setVisible(False)
-        self._table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self._table.setAlternatingRowColors(True)
-        layout.addWidget(self._table)
-        self._meta = QtWidgets.QLabel("")
-        self._meta.setWordWrap(True)
-        layout.addWidget(self._meta)
+    if result is None:
+        return []
+    if not result.ok:
+        return [("狀態", "錯誤"), ("訊息", result.error or "")]
 
-    def show_result(self, result: NodeResult | None) -> None:
-        self._table.setRowCount(0)
-        if result is None:
-            self._verdict.setText("—")
-            self._meta.setText("")
-            return
-        if not result.ok:
-            self._verdict.setText("錯誤")
-            self._verdict.setStyleSheet("color: #e05a5a; font-size: 14px; font-weight: bold;")
-            self._meta.setText(result.error or "")
-            return
-
-        verdict = next((v for v in result.outputs.values() if isinstance(v, Verdict)), None)
-        detection = next((v for v in result.outputs.values() if isinstance(v, Detection)), None)
-        measurement = next((v for v in result.outputs.values() if isinstance(v, Measurement)), None)
-
-        if verdict is None:
-            self._verdict.setText("（無判定輸出）")
-            self._verdict.setStyleSheet("color: #9a9a9a; font-size: 14px; font-weight: bold;")
-        elif verdict.ok:
-            self._verdict.setText("判定：OK")
-            self._verdict.setStyleSheet("color: #5ad07a; font-size: 14px; font-weight: bold;")
-        else:
-            self._verdict.setText("判定：NG — " + "; ".join(verdict.reasons))
-            self._verdict.setStyleSheet("color: #e05a5a; font-size: 14px; font-weight: bold;")
-
-        if detection is not None:
-            self._table.setRowCount(len(detection.items))
-            for row, item in enumerate(detection.items):
+    rows: list[tuple[str, str]] = []
+    for value in result.outputs.values():
+        if isinstance(value, Image):
+            rows += [("影像寬度", str(value.width)), ("影像高度", str(value.height)),
+                     ("通道數", str(value.channels))]
+        elif isinstance(value, Detection):
+            rows.append(("偵測數量", str(len(value))))
+            for i, item in enumerate(value.items[:8]):
                 x, y, w, h = item.bbox
-                cells = [str(row), item.label, str(x), str(y), f"{w}x{h}", f"{item.area:.0f}"]
-                for col, text in enumerate(cells):
-                    self._table.setItem(row, col, QtWidgets.QTableWidgetItem(text))
-
-        bits = [f"耗時 {result.elapsed_ms:.1f} ms" + ("（快取）" if result.cached else "")]
-        if measurement is not None and measurement.values:
-            bits += [f"{k}={v:.3g}" for k, v in measurement.values.items()]
-        self._meta.setText(" | ".join(bits))
-
-
-class HistoryPanel(QtWidgets.QTableWidget):
-    """歷史結果: one row per execution (執行序號 / 時間 / 模組數據)."""
-
-    def __init__(self, parent=None) -> None:
-        super().__init__(0, 3, parent)
-        self.setHorizontalHeaderLabels(["執行序號", "時間", "模組數據"])
-        self.horizontalHeader().setStretchLastSection(True)
-        self.verticalHeader().setVisible(False)
-        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.setAlternatingRowColors(True)
-        self.setColumnWidth(0, 80)
-        self.setColumnWidth(1, 170)
-        self._counter = 0
-
-    def append(self, summary: str) -> None:
-        self._counter += 1
-        row = 0  # newest first, like the reference
-        self.insertRow(row)
-        now = QtCore.QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss.zzz")
-        for col, text in enumerate([str(self._counter), now, summary]):
-            self.setItem(row, col, QtWidgets.QTableWidgetItem(text))
+                rows.append((f"#{i} {item.label or '物件'}", f"{x},{y} {w}×{h} 面積{item.area:.0f}"))
+        elif isinstance(value, Measurement):
+            rows += [(k, f"{v:.4g}") for k, v in value.values.items()]
+        elif isinstance(value, Verdict):
+            rows.append(("判定", "OK" if value.ok else "NG"))
+            if value.reasons:
+                rows.append(("原因", "; ".join(value.reasons)))
+    rows.append(("耗時", f"{result.elapsed_ms:.2f} ms" + ("（快取）" if result.cached else "")))
+    return rows
