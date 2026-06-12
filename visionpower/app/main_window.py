@@ -10,12 +10,23 @@ from __future__ import annotations
 
 from PySide6 import QtCore, QtWidgets
 
+import visionpower.nodes  # noqa: F401  (populate the node registry)
 from visionpower.app import constants, theme
+from visionpower.app.canvas import NodeCanvas, NodeView
+from visionpower.app.demo_flow import build_demo_flow
 from visionpower.app.dock import Dock
 from visionpower.app.graph_bridge import GraphBridge
 from visionpower.app.panels import RightPanel
 from visionpower.app.title_bar import TitleBar
 from visionpower.app.toolbar import Toolbar
+
+# Core category → card glyph for the canvas.
+_GLYPH_BY_CATEGORY = {
+    "sources": "image",
+    "filters": "bucket",
+    "analysis": "blob",
+    "sinks": "send",
+}
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -48,6 +59,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.title_bar.maximizeClicked.connect(self.toggle_max)
         self.title_bar.closeClicked.connect(self.close)
 
+        # seed with the demo pipeline so the canvas has content (engine wiring
+        # — selection / run / preview — is connected in Phase 6).
+        build_demo_flow(self.bridge)
+        self._refresh_canvas_nodes()
+
     # -- body (canvas placeholder filled in Phase 5) -----------------------
     def _build_body(self) -> QtWidgets.QWidget:
         body = QtWidgets.QWidget()
@@ -56,14 +72,27 @@ class MainWindow(QtWidgets.QMainWindow):
         grid.setSpacing(0)
 
         self.dock = Dock()
-        self.canvas_holder = self._placeholder(0, theme.BG_CANVAS)
+        self.canvas = NodeCanvas()
         self.right_panel = RightPanel()
         self.right_panel.setFixedWidth(constants.RIGHT_W)
 
         grid.addWidget(self.dock)
-        grid.addWidget(self.canvas_holder, stretch=1)
+        grid.addWidget(self.canvas, stretch=1)
         grid.addWidget(self.right_panel)
         return body
+
+    def _refresh_canvas_nodes(self) -> None:
+        """Build canvas NodeViews from the bridge's ordered core nodes."""
+
+        views = []
+        for i, node in enumerate(self.bridge.nodes):
+            color = theme.NODE_COLORS[i % len(theme.NODE_COLORS)]
+            glyph = _GLYPH_BY_CATEGORY.get(node.CATEGORY, "image")
+            views.append(NodeView(
+                id=node.id, index=i + 1,
+                name=node.LABEL or node.NODE_TYPE, color=color, glyph=glyph,
+            ))
+        self.canvas.set_nodes(views)
 
     @staticmethod
     def _placeholder(width: int, bg: str) -> QtWidgets.QWidget:

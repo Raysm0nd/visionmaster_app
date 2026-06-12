@@ -27,10 +27,10 @@
 
 ## 5. 自繪節點畫布 node-canvas（依賴 1、2）
 
-- [ ] 5.1 撰寫 `tests/test_app/test_canvas.py`（offscreen）：節點命中測試→選取狀態、單一選取、縮放數值（放大/縮小/重設 100%）、執行狀態機（running/ranStep/runFrom）逐級推進
-- [ ] 5.2 實作 `app/canvas.py` 繪製層：QPainter 藍圖網格背景、垂直節點卡（圖示/序號/名稱/狀態點）、節點間連線
-- [ ] 5.3 實作畫布互動：`mousePressEvent` 命中選取（發 signal）、`painter.scale` 縮放、浮動控制條（耗時+放大/縮小/重設）
-- [ ] 5.4 實作執行動畫：`QTimer` 320ms/級逐級點亮、完成標記、連線資料流動畫
+- [x] 5.1 撰寫 `tests/test_app/test_canvas.py`（offscreen）：節點命中測試→選取狀態、單一選取、縮放數值（放大/縮小/重設 100%）、執行狀態機（running/ranStep/runFrom）逐級推進
+- [x] 5.2 實作 `app/canvas.py` 繪製層：QPainter 藍圖網格背景、垂直節點卡（圖示/序號/名稱/狀態點）、節點間連線
+- [x] 5.3 實作畫布互動：`mousePressEvent` 命中選取（發 signal）、`painter.scale` 縮放、浮動控制條（耗時+放大/縮小/重設）
+- [x] 5.4 實作執行動畫：`QTimer` 320ms/級逐級點亮、完成標記、連線資料流動畫
 
 ## 6. 引擎連動整合與收尾（依賴 2、3、4、5）
 
