@@ -45,13 +45,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("VisionPower")
-        # Frameless, but keep the minimize hint so taskbar minimize still works.
-        self.setWindowFlags(
-            QtCore.Qt.FramelessWindowHint
-            | QtCore.Qt.WindowMinimizeButtonHint
-            | QtCore.Qt.WindowMaximizeButtonHint
-            | QtCore.Qt.WindowSystemMenuHint
-        )
+        # Pure frameless: extra window-button hints make Windows draw native
+        # caption buttons that overlap and swallow clicks on our custom controls.
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.setMinimumSize(1024, 640)
         screen = QtGui.QGuiApplication.primaryScreen()
         if screen is not None:

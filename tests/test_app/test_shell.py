@@ -73,12 +73,20 @@ def test_maximize_restores_previous_geometry(qapp):
     assert win.geometry() == before
 
 
-def test_window_flags_allow_minimize(qapp):
-    # FramelessWindowHint alone breaks taskbar minimize; the minimize hint fixes it.
+def test_window_uses_pure_frameless_flag(qapp):
+    # Extra window-button hints make Windows draw native caption buttons that
+    # overlap (and swallow clicks on) our custom controls — keep it pure.
     win = MainWindow()
     flags = win.windowFlags()
     assert bool(flags & QtCore.Qt.FramelessWindowHint)
-    assert bool(flags & QtCore.Qt.WindowMinimizeButtonHint)
+    assert not (flags & QtCore.Qt.WindowMaximizeButtonHint)
+
+
+def test_minimize_call_does_not_crash(qapp):
+    win = MainWindow()
+    win.show()
+    win.showMinimized()  # must not raise on a frameless window
+    win.showNormal()
 
 
 def test_panels_are_fixed_size_not_user_adjustable(qapp):
