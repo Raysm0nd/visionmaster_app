@@ -34,8 +34,8 @@
 
 ## 6. 引擎連動整合與收尾（依賴 2、3、4、5）
 
-- [ ] 6.1 撰寫 `tests/test_app/test_main_window.py`（offscreen）：選取節點→PropertyPanel 顯示真實參數；執行全部/部分執行→呼叫 Scheduler 並更新預覽/結果；儲存/載入 JSON
-- [ ] 6.2 重寫 `MainWindow` 連動：畫布選取↔屬性/預覽/結果；執行按鈕↔Scheduler + 畫布動畫；參數修改→增量重算
-- [ ] 6.3 接上儲存/載入 JSON 流程與 `main.py` 入口；確認 `/run-app` 可啟動
-- [ ] 6.4 `pyproject.toml` 移除 NodeGraphQt 依賴；全專案搜尋確認無殘留 import
-- [ ] 6.5 跑 `QT_QPA_PLATFORM=offscreen uv run pytest` 全綠 + `/gui-verify` 離屏截圖比對設計稿；ruff lint 通過
+- [x] 6.1 撰寫 `tests/test_app/test_main_window.py`（offscreen）：選取節點→PropertyPanel 顯示真實參數；執行全部/部分執行→呼叫 Scheduler 並更新預覽/結果；儲存/載入 JSON
+- [x] 6.2 重寫 `MainWindow` 連動：畫布選取↔屬性/預覽/結果；執行按鈕↔Scheduler + 畫布動畫；參數修改→增量重算
+- [x] 6.3 接上儲存/載入 JSON 流程與 `main.py` 入口；確認 `/run-app` 可啟動
+- [x] 6.4 `pyproject.toml` 移除 NodeGraphQt 依賴；全專案搜尋確認無殘留 import
+- [x] 6.5 跑 `QT_QPA_PLATFORM=offscreen uv run pytest` 全綠 + `/gui-verify` 離屏截圖比對設計稿；ruff lint 通過

@@ -60,13 +60,13 @@ class Dock(QtWidgets.QWidget):
             if i == self.selected_index:
                 btn.setIcon(icons.make_icon(icon_name, "#DCEAFC", 18))
                 btn.setStyleSheet(
-                    f"QPushButton{{border:none;border-radius:9px;"
-                    f"background:rgba(47,128,216,0.22);"
-                    f"border:1px solid rgba(47,128,216,0.55);}}"
+                    "QPushButton{border:none;border-radius:9px;"
+                    "background:rgba(47,128,216,0.22);"
+                    "border:1px solid rgba(47,128,216,0.55);}"
                 )
             else:
                 btn.setIcon(icons.make_icon(icon_name, "#788397", 18))
                 btn.setStyleSheet(
-                    f"QPushButton{{border:none;border-radius:9px;background:transparent;}}"
-                    f"QPushButton:hover{{background:rgba(47,128,216,0.12);}}"
+                    "QPushButton{border:none;border-radius:9px;background:transparent;}"
+                    "QPushButton:hover{background:rgba(47,128,216,0.12);}"
                 )

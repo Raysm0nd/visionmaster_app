@@ -126,9 +126,9 @@ class TitleBar(QtWidgets.QWidget):
         btn.setFlat(True)
         btn.setFixedHeight(28)
         btn.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;border-radius:7px;"
-            f"color:#C2CCDA;font-size:13px;padding:0 11px;}}"
-            f"QPushButton:hover{{background:rgba(255,255,255,0.07);}}"
+            "QPushButton{background:transparent;border:none;border-radius:7px;"
+            "color:#C2CCDA;font-size:13px;padding:0 11px;}"
+            "QPushButton:hover{background:rgba(255,255,255,0.07);}"
         )
         return btn
 

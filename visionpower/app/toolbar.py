@@ -80,8 +80,8 @@ class Toolbar(QtWidgets.QWidget):
         btn.setCursor(QtCore.Qt.PointingHandCursor)
         btn.setFixedSize(34, 34)
         btn.setStyleSheet(
-            f"QPushButton{{background:transparent;border:none;border-radius:8px;}}"
-            f"QPushButton:hover{{background:rgba(47,128,216,0.14);}}"
+            "QPushButton{background:transparent;border:none;border-radius:8px;}"
+            "QPushButton:hover{background:rgba(47,128,216,0.14);}"
         )
         if hasattr(self, signal_name):
             btn.clicked.connect(getattr(self, signal_name))
@@ -116,10 +116,10 @@ class Toolbar(QtWidgets.QWidget):
         btn.setCursor(QtCore.Qt.PointingHandCursor)
         btn.setFixedHeight(34)
         btn.setStyleSheet(
-            f"QPushButton{{color:#CFE2FB;border-radius:8px;"
-            f"font-size:12px;font-weight:600;padding:0 13px;"
-            f"background:rgba(47,128,216,0.10);"
-            f"border:1px solid rgba(47,128,216,0.34);}}"
-            f"QPushButton:hover{{background:rgba(47,128,216,0.20);color:#fff;}}"
+            "QPushButton{color:#CFE2FB;border-radius:8px;"
+            "font-size:12px;font-weight:600;padding:0 13px;"
+            "background:rgba(47,128,216,0.10);"
+            "border:1px solid rgba(47,128,216,0.34);}"
+            "QPushButton:hover{background:rgba(47,128,216,0.20);color:#fff;}"
         )
         return btn
